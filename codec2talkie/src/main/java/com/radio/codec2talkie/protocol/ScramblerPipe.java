@@ -24,8 +24,6 @@ public class ScramblerPipe implements Protocol {
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
-    private Context _context;
-
     private final Protocol _childProtocol;
     private final String _scramblingKey;
 
@@ -38,8 +36,7 @@ public class ScramblerPipe implements Protocol {
 
     @Override
     public void initialize(Transport transport, Context context) throws IOException {
-        _context = context;
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(_context);
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         _iterationsCount = Integer.parseInt(sharedPreferences.getString(PreferenceKeys.KISS_SCRAMBLER_ITERATIONS, "1000"));
         _childProtocol.initialize(transport, context);
     }
@@ -82,23 +79,29 @@ public class ScramblerPipe implements Protocol {
                 System.arraycopy(scrambledFrame, data.iv.length, data.salt, 0, data.salt.length);
                 System.arraycopy(scrambledFrame, data.iv.length + data.salt.length, data.scrambledData, 0, data.scrambledData.length);
 
-                byte[] audioFrame = null;
+                byte[] audioFrames = null;
                 try {
-                    audioFrame = ScramblingTools.unscramble(_scramblingKey, data, _iterationsCount);
+                    audioFrames = ScramblingTools.unscramble(_scramblingKey, data, _iterationsCount);
                 } catch (NoSuchAlgorithmException | InvalidKeySpecException | NoSuchPaddingException |
                         InvalidKeyException | BadPaddingException | IllegalBlockSizeException |
                         InvalidAlgorithmParameterException e) {
 
                     e.printStackTrace();
+                    callback.onProtocolError();
                 }
-                if (audioFrame != null) {
-                    callback.onReceiveAudioFrames(audioFrame);
+                if (audioFrames != null) {
+                    callback.onReceiveAudioFrames(audioFrames);
                 }
             }
 
             @Override
             protected void onReceiveSignalLevel(byte[] rawData) {
                 callback.onReceiveSignalLevel(rawData);
+            }
+
+            @Override
+            protected void onProtocolError() {
+                callback.onProtocolError();
             }
         });
     }
