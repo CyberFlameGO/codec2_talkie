@@ -62,7 +62,7 @@ public class AudioPlayer extends Thread {
                 AUDIO_SAMPLE_SIZE,
                 AudioFormat.CHANNEL_OUT_MONO,
                 AudioFormat.ENCODING_PCM_16BIT);
-        _systemAudioPlayer = new AudioTrack(AudioManager.STREAM_VOICE_CALL,
+        _systemAudioPlayer = new AudioTrack(AudioManager.STREAM_MUSIC,
                 AUDIO_SAMPLE_SIZE,
                 AudioFormat.CHANNEL_OUT_MONO,
                 AudioFormat.ENCODING_PCM_16BIT,
