@@ -90,7 +90,7 @@ else()
 endif()
 
 # Set default C flags.
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-strict-overflow")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-strict-overflow -D__ANDROID_API__=21")
 
 # Check for what C standard is supported.
 include(CheckCCompilerFlag)
@@ -150,7 +150,7 @@ option(BUILD_SHARED_LIBS
 if(CMAKE_BUILD_TYPE MATCHES "Release")
     option(UNITTEST "Build unittest binaries." OFF)
 else()
-    option(UNITTEST "Build unittest binaries." ON)
+    option(UNITTEST "Build unittest binaries." OFF)
 endif()
 option(INSTALL_EXAMPLES "Install example code." OFF)
 if(INSTALL_EXAMPLES)
