@@ -3,6 +3,7 @@ package com.radio.codec2talkie.audio;
 import android.content.Context;
 import android.media.AudioAttributes;
 import android.media.AudioFormat;
+import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
@@ -113,19 +114,12 @@ public class AudioProcessor extends Thread {
                 AUDIO_SAMPLE_SIZE,
                 AudioFormat.CHANNEL_OUT_MONO,
                 AudioFormat.ENCODING_PCM_16BIT);
-        _systemAudioPlayer = new AudioTrack.Builder()
-                .setAudioAttributes(new AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_MEDIA)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
-                        .build())
-                .setAudioFormat(new AudioFormat.Builder()
-                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                        .setSampleRate(AUDIO_SAMPLE_SIZE)
-                        .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
-                        .build())
-                .setTransferMode(AudioTrack.MODE_STREAM)
-                .setBufferSizeInBytes(10 * _audioPlayerMinBufferSize)
-                .build();
+        _systemAudioPlayer = new AudioTrack(AudioManager.STREAM_VOICE_CALL,
+                AUDIO_SAMPLE_SIZE,
+                AudioFormat.CHANNEL_OUT_MONO,
+                AudioFormat.ENCODING_PCM_16BIT,
+                10 * _audioPlayerMinBufferSize,
+                AudioTrack.MODE_STREAM);
     }
 
     private void constructCodec2(int codecMode) {
