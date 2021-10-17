@@ -15,9 +15,9 @@ public class RadioTools {
         int maxSpeedBps = 128000;
         try {
             if (sharedPreferences.getBoolean(PreferenceKeys.KISS_EXTENSIONS_ENABLED, false)) {
-                int bw = Integer.parseInt(sharedPreferences.getString(PreferenceKeys.KISS_EXTENSIONS_RADIO_BANDWIDTH, ""));
-                int sf = Integer.parseInt(sharedPreferences.getString(PreferenceKeys.KISS_EXTENSIONS_RADIO_SF, ""));
-                int cr = Integer.parseInt(sharedPreferences.getString(PreferenceKeys.KISS_EXTENSIONS_RADIO_CR, ""));
+                int bw = Integer.parseInt(sharedPreferences.getString(PreferenceKeys.KISS_EXTENSIONS_RADIO_BANDWIDTH, "125000"));
+                int sf = Integer.parseInt(sharedPreferences.getString(PreferenceKeys.KISS_EXTENSIONS_RADIO_SF, "7"));
+                int cr = Integer.parseInt(sharedPreferences.getString(PreferenceKeys.KISS_EXTENSIONS_RADIO_CR, "5"));
 
                 resultBps = RadioTools.calculateLoraSpeedBps(bw, sf, cr);
             }
@@ -27,7 +27,10 @@ public class RadioTools {
         return (resultBps > 0 && resultBps <= maxSpeedBps) ? resultBps : 0;
     }
 
-    public static double calculateLoraSensitivity(int bw, int sf) {
+    public static double calculateLoraSensitivity(SharedPreferences sharedPreferences) {
+        int bw = Integer.parseInt(sharedPreferences.getString(PreferenceKeys.KISS_EXTENSIONS_RADIO_BANDWIDTH, "125000"));
+        int sf = Integer.parseInt(sharedPreferences.getString(PreferenceKeys.KISS_EXTENSIONS_RADIO_SF, "5"));
+
         double snrLimit = -7.0;
         double noiseFigure = 6.0;
         switch (sf) {
