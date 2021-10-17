@@ -1,9 +1,30 @@
 package com.radio.codec2talkie.tools;
 
+import android.content.SharedPreferences;
+
+import com.radio.codec2talkie.settings.PreferenceKeys;
+
 public class RadioTools {
 
     public static int calculateLoraSpeedBps(int bw, int sf, int cr) {
         return (int)(sf * (4.0 / cr) / (Math.pow(2.0, sf) / bw));
+    }
+
+    public static int getRadioSpeed(SharedPreferences sharedPreferences) {
+        int resultBps = 0;
+        int maxSpeedBps = 128000;
+        try {
+            if (sharedPreferences.getBoolean(PreferenceKeys.KISS_EXTENSIONS_ENABLED, false)) {
+                int bw = Integer.parseInt(sharedPreferences.getString(PreferenceKeys.KISS_EXTENSIONS_RADIO_BANDWIDTH, ""));
+                int sf = Integer.parseInt(sharedPreferences.getString(PreferenceKeys.KISS_EXTENSIONS_RADIO_SF, ""));
+                int cr = Integer.parseInt(sharedPreferences.getString(PreferenceKeys.KISS_EXTENSIONS_RADIO_CR, ""));
+
+                resultBps = RadioTools.calculateLoraSpeedBps(bw, sf, cr);
+            }
+        } catch (NumberFormatException|ArithmeticException e) {
+            e.printStackTrace();
+        }
+        return (resultBps > 0 && resultBps <= maxSpeedBps) ? resultBps : 0;
     }
 
     public static double calculateLoraSensitivity(int bw, int sf) {
