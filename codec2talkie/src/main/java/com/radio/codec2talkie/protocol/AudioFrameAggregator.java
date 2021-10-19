@@ -60,7 +60,7 @@ public class AudioFrameAggregator implements Protocol {
             protected void onReceiveAudioFrames(byte[] audioFrames) {
                 if (audioFrames.length % _codec2FrameSize != 0) {
                     Log.e(TAG, "Ignoring audio frame of wrong size: " + audioFrames.length);
-                    callback.onProtocolError();
+                    callback.onProtocolRxError();
                 } else {
                     // split by audio frame
                     byte[] audioFrame = new byte[_codec2FrameSize];
@@ -79,8 +79,8 @@ public class AudioFrameAggregator implements Protocol {
             }
 
             @Override
-            protected void onProtocolError() {
-                callback.onProtocolError();
+            protected void onProtocolRxError() {
+                callback.onProtocolRxError();
             }
         });
     }
@@ -90,5 +90,10 @@ public class AudioFrameAggregator implements Protocol {
         _childProtocol.send(Arrays.copyOf(_outputBuffer, _outputBufferPos));
         _outputBufferPos = 0;
         _childProtocol.flush();
+    }
+
+    @Override
+    public void close() {
+        _childProtocol.close();
     }
 }

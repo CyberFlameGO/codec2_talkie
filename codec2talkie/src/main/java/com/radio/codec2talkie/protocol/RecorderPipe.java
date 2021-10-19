@@ -64,8 +64,8 @@ public class RecorderPipe implements Protocol {
             }
 
             @Override
-            protected void onProtocolError() {
-                callback.onProtocolError();
+            protected void onProtocolRxError() {
+                callback.onProtocolRxError();
             }
         });
     }
@@ -73,6 +73,11 @@ public class RecorderPipe implements Protocol {
     @Override
     public void flush() throws IOException {
         _childProtocol.flush();
+    }
+
+    @Override
+    public void close() {
+        _childProtocol.close();
     }
 
     private void writeToFile(byte[] rawData)  {
