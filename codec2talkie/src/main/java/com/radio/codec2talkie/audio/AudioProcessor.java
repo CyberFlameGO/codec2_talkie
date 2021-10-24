@@ -164,6 +164,7 @@ public class AudioProcessor extends Thread {
 
     public void stopRunning() {
         if (_currentStatus != PROCESSOR_DISCONNECTED) {
+            Log.i(TAG, "stopRunning()");
             Message msg = new Message();
             msg.what = PROCESSOR_QUIT;
             _onMessageReceived.sendMessage(msg);
@@ -306,6 +307,7 @@ public class AudioProcessor extends Thread {
     }
 
     private void cleanup() {
+        Log.i(TAG, "cleanup() started");
         _systemAudioRecorder.stop();
         _systemAudioRecorder.release();
 
@@ -325,6 +327,7 @@ public class AudioProcessor extends Thread {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        Log.i(TAG, "cleanup() completed");
     }
 
     private void processRxTx() throws IOException {
@@ -342,6 +345,7 @@ public class AudioProcessor extends Thread {
     }
 
     private void quitProcessing() {
+        Log.i(TAG, "quitProcessing()");
         _processPeriodicTimer.cancel();
         _processPeriodicTimer.purge();
         Looper.myLooper().quitSafely();
@@ -384,6 +388,7 @@ public class AudioProcessor extends Thread {
 
     @Override
     public void run() {
+        Log.i(TAG, "Starting message loop");
         setPriority(Thread.MAX_PRIORITY);
         Looper.prepare();
 
@@ -400,5 +405,6 @@ public class AudioProcessor extends Thread {
 
         cleanup();
         sendStatusUpdate(PROCESSOR_DISCONNECTED);
+        Log.i(TAG, "Exiting message loop");
     }
 }
