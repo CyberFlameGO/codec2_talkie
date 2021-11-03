@@ -216,7 +216,7 @@ public class Kiss implements Protocol {
     }
 
     @Override
-    public void flush() throws IOException{
+    public void flush() throws IOException {
         completeKissPacket();
     }
 
