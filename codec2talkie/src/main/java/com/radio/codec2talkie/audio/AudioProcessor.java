@@ -40,7 +40,7 @@ public class AudioProcessor extends Thread {
     public static final int PROCESSOR_PLAYING = 6;
     public static final int PROCESSOR_RX_LEVEL = 7;
     public static final int PROCESSOR_TX_LEVEL = 8;
-    public static final int PROCESSOR_CODEC_ERROR = 9;
+    public static final int PROCESSOR_RX_ERROR = 9;
     public static final int PROCESSOR_RX_RADIO_LEVEL = 10;
 
     public static final int PROCESSOR_PROCESS = 11;
@@ -94,7 +94,7 @@ public class AudioProcessor extends Thread {
         _processPeriodicTimer = new Timer();
 
         _codec2Mode = codec2Mode;
-        _recordAudioBuffer = new short[_protocol.getPcmAudioBufferSize(codec2Mode)];
+        _recordAudioBuffer = new short[_protocol.getPcmAudioBufferSize()];
 
         constructSystemAudioDevices();
     }
@@ -239,7 +239,7 @@ public class AudioProcessor extends Thread {
 
         @Override
         protected void onProtocolRxError() {
-            sendStatusUpdate(PROCESSOR_CODEC_ERROR);
+            sendStatusUpdate(PROCESSOR_RX_ERROR);
             Log.e(TAG, "Protocol RX error");
         }
     };
