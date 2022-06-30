@@ -2,7 +2,7 @@
 ![APK](https://img.shields.io/endpoint?url=https://apt.izzysoft.de/fdroid/api/v1/shield/com.radio.codec2talkie)
 
 # Introduction
-**Turn your Android phone into real VHF/UHF Walkie-Talkie (requires additional digital radio hardware/software modem)**
+**Turn your Android phone into real Amateur Radio VHF/UHF DV transceiver (requires additional digital radio hardware/software modem)**
 
 For more information visit project [Wiki](https://github.com/sh123/codec2_talkie/wiki)
 
@@ -11,14 +11,14 @@ For more information visit project [Wiki](https://github.com/sh123/codec2_talkie
 ![alt text](images/screenshot.png)
 ![alt text](images/screenshot_settings.png)
 
-This minimalistic Android application is a Walkie-Talkie style digital voice frontend for your radio modem, which uses open source [Codec2](https://github.com/drowe67/codec2) for speech audio frame encoding/decoding. 
+This minimalistic Android application is an Amateur Radio Walkie-Talkie style digital voice frontend for your radio modem, which uses open source [Codec2](https://github.com/drowe67/codec2) for speech audio frame encoding/decoding with additional AX.25/APRS support.
 
-It is mainly intended for DV experimentation with ultra low cost 3-8 dollar radio modems, such as LoRa and 15-25 dollar ESP32 board flavours with built-in LoRa module: T-Beam,
+It is mainly intended for Amateur Radio DV experimentation with ultra low cost 3-8 dollar radio modems, such as LoRa and 15-25 dollar ESP32 board flavors with built-in LoRa module: T-Beam,
 LoPy, TTGO, Heltec and others, but could also be used with custom hardware of software (Direwolf) modems + external transceivers or as a test harness for Codec2 frames generation and their playback.
 
 ![alt text](images/tracker.jpg)
 
-Application connects to your radio KISS Bluetooth/BLE/USB/TCPIP modem, records speech from the phone microphone on transmit, encodes audio into Codec2 format, encapsulates into KISS frames and sends to your modem. 
+Application connects to your radio KISS Bluetooth/BLE/USB/TCPIP modem, records speech from the phone microphone on transmit, encodes audio into Codec2 format, encapsulates into KISS frames (plus into AX.25 frames if enabled in settings) and sends to your modem. 
 On receive, modem sends KISS packets to the phone with Codec2 speech, application decodes Codec2 samples and plays them through phone speaker.
 
 It does not deal with radio management, modulation, etc, it is up to your modem and radio, it could be just AFSK1200, GMSK 9600, LoRa, FSK, FreeDV or any other modulation scheme. Radio just needs to expose KISS Bluetooth/BLE/USB/TCPIP interface for speech frames and optional radio control.
