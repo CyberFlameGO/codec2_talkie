@@ -17,8 +17,6 @@ import androidx.preference.PreferenceManager;
 import com.radio.codec2talkie.protocol.position.Position;
 import com.radio.codec2talkie.settings.PreferenceKeys;
 
-import java.util.Timer;
-
 public class Periodic implements Tracker {
     private static final String TAG = Periodic.class.getSimpleName();
 
