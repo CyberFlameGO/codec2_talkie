@@ -145,11 +145,11 @@ public class AppWorker extends Thread {
         return AUDIO_MAX_LEVEL;
     }
 
-    public void startPlayback() {
+    public void startReceive() {
         _needsRecording = false;
     }
 
-    public void startRecording() {
+    public void startTransmit() {
         _needsRecording = true;
     }
 
