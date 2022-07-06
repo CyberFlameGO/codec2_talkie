@@ -5,10 +5,8 @@ import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
-import android.media.session.PlaybackState;
 import android.os.Handler;
 import android.os.Message;
-import android.util.Log;
 
 import com.ustadmobile.codec2.Codec2;
 
