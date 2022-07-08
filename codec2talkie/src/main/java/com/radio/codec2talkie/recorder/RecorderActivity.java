@@ -158,18 +158,23 @@ public class RecorderActivity extends AppCompatActivity {
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK  && event.getRepeatCount() == 0) {
-            if (_audioPlayer != null) {
-                _audioPlayer.stopPlayback();
-            }
-            if (!_root.getAbsolutePath().equals(_currentDirectory.getAbsolutePath())) {
-                _currentDirectory = _currentDirectory.getParentFile();
-                if (_currentDirectory != null) {
-                    loadFiles(_currentDirectory);
-                    return true;
-                }
-            }
+            if (loadPreviousDirectory()) return true;
         }
         return super.onKeyDown(keyCode, event);
+    }
+
+    private boolean loadPreviousDirectory() {
+        if (_audioPlayer != null) {
+            _audioPlayer.stopPlayback();
+        }
+        if (!_root.getAbsolutePath().equals(_currentDirectory.getAbsolutePath())) {
+            _currentDirectory = _currentDirectory.getParentFile();
+            if (_currentDirectory != null) {
+                loadFiles(_currentDirectory);
+                return true;
+            }
+        }
+        return false;
     }
 
     private void runDeleteFromDirectoryConfirmation(File directory) {
@@ -206,7 +211,8 @@ public class RecorderActivity extends AppCompatActivity {
         int itemId = item.getItemId();
 
         if (itemId == android.R.id.home) {
-            finish();
+            if (loadPreviousDirectory()) return true;
+            onBackPressed();
             return true;
         }
         else if (itemId == R.id.recorder_play_all) {
