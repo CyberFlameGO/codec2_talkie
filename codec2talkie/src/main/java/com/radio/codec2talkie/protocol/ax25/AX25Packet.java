@@ -124,21 +124,23 @@ public class AX25Packet {
 
     public boolean digiRepeat() {
         boolean isDigiRepeated = false;
+        if (digipath == null) return false;
         String[] digiPaths = digipath.split(",");
         StringBuilder buf = new StringBuilder();
-        for (String digiPath : digiPaths) {
+        for (int i = 0; i < digiPaths.length; i++) {
             AX25Callsign rptCallsign = new AX25Callsign();
-            rptCallsign.fromString(digiPath);
+            rptCallsign.fromString(digiPaths[i]);
             if (rptCallsign.isValid) {
-                if (rptCallsign.digiRepeat()) {
+                if (!isDigiRepeated && rptCallsign.digiRepeat()) {
                     isDigiRepeated = true;
                     buf.append(rptCallsign.toString());
                 } else {
-                    buf.append(digiPath);
+                    buf.append(digiPaths[i]);
                 }
             } else {
-                buf.append(digiPath);
+                buf.append(digiPaths[i]);
             }
+            if (i < digiPaths.length - 1) buf.append(",");
         }
         digipath = buf.toString();
         return isDigiRepeated;
