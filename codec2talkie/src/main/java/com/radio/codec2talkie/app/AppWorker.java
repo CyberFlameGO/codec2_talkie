@@ -13,6 +13,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
+import android.util.Pair;
 
 import androidx.preference.PreferenceManager;
 
@@ -21,6 +22,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import com.radio.codec2talkie.R;
+import com.radio.codec2talkie.protocol.message.TextMessage;
 import com.radio.codec2talkie.storage.log.LogItem;
 import com.radio.codec2talkie.storage.log.LogItemRepository;
 import com.radio.codec2talkie.protocol.ProtocolCallback;
@@ -28,6 +30,8 @@ import com.radio.codec2talkie.protocol.Protocol;
 import com.radio.codec2talkie.protocol.ProtocolFactory;
 import com.radio.codec2talkie.protocol.position.Position;
 import com.radio.codec2talkie.settings.PreferenceKeys;
+import com.radio.codec2talkie.storage.message.MessageItem;
+import com.radio.codec2talkie.storage.message.MessageItemRepository;
 import com.radio.codec2talkie.tools.AudioTools;
 import com.radio.codec2talkie.transport.Transport;
 import com.radio.codec2talkie.transport.TransportFactory;
@@ -66,8 +70,9 @@ public class AppWorker extends Thread {
     // listen timer
     private Timer _listenTimer;
 
-    // log integration
+    // storage integration
     private final LogItemRepository _logItemRepository;
+    private final MessageItemRepository _messageItemRepository;
 
     private final Context _context;
     private final SharedPreferences _sharedPreferences;
@@ -89,6 +94,7 @@ public class AppWorker extends Thread {
         _recordAudioBuffer = new short[_protocol.getPcmAudioBufferSize()];
 
         _logItemRepository = new LogItemRepository((Application)context);
+        _messageItemRepository = new MessageItemRepository((Application)context);
 
         constructSystemAudioDevices();
     }
@@ -164,6 +170,13 @@ public class AppWorker extends Thread {
         _onMessageReceived.sendMessage(msg);
     }
 
+    public void sendTextMessage(TextMessage textMessage) {
+        Message msg = Message.obtain();
+        msg.what = AppMessage.CMD_SEND_MESSAGE.toInt();
+        msg.obj = textMessage;
+        _onMessageReceived.sendMessage(msg);
+    }
+
     private void sendStatusUpdate(AppMessage newStatus, String note) {
 
         if (newStatus != _currentStatus) {
@@ -227,8 +240,25 @@ public class AppWorker extends Thread {
         }
 
         @Override
+        protected void onReceiveTextMessage(TextMessage textMessage) {
+            String note = (textMessage.src == null ? "UNK" : textMessage.src) + "→" +
+                    (textMessage.dst == null ? "UNK" : textMessage.dst);
+            sendStatusUpdate(AppMessage.EV_TEXT_MESSAGE_RECEIVED, note + ": " + textMessage.text);
+
+            MessageItem messageItem = new MessageItem();
+            messageItem.setTimestampEpoch(System.currentTimeMillis());
+            messageItem.setNeedsAck(false); // TODO
+            messageItem.setIsTransmit(false);
+            messageItem.setSrcCallsign(textMessage.src);
+            messageItem.setDstCallsign(textMessage.dst);
+            messageItem.setMessage(textMessage.text);
+
+            _messageItemRepository.insertMessageItem(messageItem);
+            Log.i(TAG, "message received: " + textMessage.text);
+        }
+
+        @Override
         protected void onReceiveData(String src, String dst, byte[] data) {
-            // TODO, handle incoming messages
             String note = (src == null ? "UNK" : src) + "→" + (dst == null ? "UNK" : dst);
             sendStatusUpdate(AppMessage.EV_DATA_RECEIVED, note);
         }
@@ -254,6 +284,23 @@ public class AppWorker extends Thread {
         @Override
         protected void onTransmitCompressedAudio(String src, String dst, int codec, byte[] frame) {
             throw new UnsupportedOperationException();
+        }
+
+        @Override
+        protected void onTransmitTextMessage(TextMessage textMessage) {
+            String note = (textMessage.src == null ? "UNK" : textMessage.src) + "→" +
+                    (textMessage.dst == null ? "UNK" : textMessage.dst);
+            sendStatusUpdate(AppMessage.EV_TEXT_MESSAGE_TRANSMITTED, note);
+
+            MessageItem messageItem = new MessageItem();
+            messageItem.setTimestampEpoch(System.currentTimeMillis());
+            messageItem.setNeedsAck(false); // TODO
+            messageItem.setIsTransmit(true);
+            messageItem.setSrcCallsign(textMessage.src);
+            messageItem.setDstCallsign(textMessage.dst);
+            messageItem.setMessage(textMessage.text);
+
+            _messageItemRepository.insertMessageItem(messageItem);
         }
 
         @Override
@@ -405,6 +452,15 @@ public class AppWorker extends Thread {
             case CMD_SEND_LOCATION_TO_TNC:
                 try {
                     _protocol.sendPosition((Position)msg.obj);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    quitProcessing();
+                }
+                break;
+            case CMD_SEND_MESSAGE:
+                TextMessage textMessage = (TextMessage) msg.obj;
+                try {
+                    _protocol.sendTextMessage(textMessage);
                 } catch (IOException e) {
                     e.printStackTrace();
                     quitProcessing();
