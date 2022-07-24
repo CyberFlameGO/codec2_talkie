@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.radio.codec2talkie.R;
+import com.radio.codec2talkie.storage.log.group.LogItemGroupAdapter;
 import com.radio.codec2talkie.storage.position.PositionItemViewModel;
 
 public class LogItemActivity extends AppCompatActivity {
@@ -32,6 +33,14 @@ public class LogItemActivity extends AppCompatActivity {
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) actionBar.setDisplayHomeAsUpEnabled(true);
 
+        // get group name to decide if filtering should be enabled
+        Bundle bundle = getIntent().getExtras();
+        _groupName = null;
+        if (bundle != null) {
+            _groupName = (String)bundle.get("groupName");
+        }
+
+        // view models
         _logItemViewModel = new ViewModelProvider(this).get(LogItemViewModel.class);
         _positionItemViewModel = new ViewModelProvider(this).get(PositionItemViewModel.class);
 
@@ -39,7 +48,8 @@ public class LogItemActivity extends AppCompatActivity {
         RecyclerView logItemRecyclerView = findViewById(R.id.log_item_recyclerview);
         logItemRecyclerView.setHasFixedSize(true);
 
-        final LogItemAdapter adapter = new LogItemAdapter(new LogItemAdapter.LogItemDiff());
+        // log lines list adapter
+        final LogItemAdapter adapter = new LogItemAdapter(new LogItemAdapter.LogItemDiff(), _groupName == null);
         logItemRecyclerView.setAdapter(adapter);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         logItemRecyclerView.setLayoutManager(linearLayoutManager);
@@ -49,6 +59,7 @@ public class LogItemActivity extends AppCompatActivity {
         RecyclerView logItemGroupRecyclerView = findViewById(R.id.log_item_group_recyclerview);
         logItemGroupRecyclerView.setHasFixedSize(true);
 
+        // groups adapter
         final LogItemGroupAdapter adapterGroup = new LogItemGroupAdapter(new LogItemGroupAdapter.LogItemGroupDiff());
         adapterGroup.setClickListener(v -> {
             TextView itemView = v.findViewById(R.id.log_view_group_item_title);
@@ -64,11 +75,6 @@ public class LogItemActivity extends AppCompatActivity {
         _logItemViewModel.getGroups().observe(this, adapterGroup::submitList);
 
         // launch with filter if group name is provided
-        Bundle bundle = getIntent().getExtras();
-        _groupName = null;
-        if (bundle != null) {
-            _groupName = (String)bundle.get("groupName");
-        }
         if (_groupName == null) {
             logItemGroupRecyclerView.setVisibility(View.GONE);
             findViewById(R.id.log_item_textview).setVisibility(View.GONE);

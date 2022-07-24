@@ -9,7 +9,6 @@ import android.widget.TextView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.radio.codec2talkie.R;
-import com.radio.codec2talkie.storage.message.MessageItemActivity;
 import com.radio.codec2talkie.tools.DateTools;
 import com.radio.codec2talkie.tools.TextTools;
 
@@ -18,11 +17,13 @@ public class LogItemHolder extends RecyclerView.ViewHolder implements View.OnCli
     private final TextView _logItemViewTitle;
     private final TextView _logItemViewMessage;
     private String _srcCallsign;
+    private final boolean _isClickable;
 
-    private LogItemHolder(View itemView) {
+    private LogItemHolder(View itemView, boolean isClickable) {
         super(itemView);
         _logItemViewTitle = itemView.findViewById(R.id.log_view_item_title);
         _logItemViewMessage = itemView.findViewById(R.id.log_view_item_message);
+        _isClickable = isClickable;
         itemView.setOnClickListener(this);
     }
 
@@ -35,14 +36,15 @@ public class LogItemHolder extends RecyclerView.ViewHolder implements View.OnCli
         _logItemViewMessage.setText(TextTools.addZeroWidthSpaces(text));
     }
 
-    static LogItemHolder create(ViewGroup parent) {
+    static LogItemHolder create(ViewGroup parent, boolean isClickable) {
         View view = LayoutInflater.from(parent.getContext()).inflate(
                 R.layout.activity_log_view_item, parent, false);
-        return new LogItemHolder(view);
+        return new LogItemHolder(view, isClickable);
     }
 
     @Override
     public void onClick(View v) {
+        if (!_isClickable) return;
         Intent logItemIntent = new Intent(v.getContext(), LogItemActivity.class);
         logItemIntent.putExtra("groupName", _srcCallsign);
         v.getContext().startActivity(logItemIntent);

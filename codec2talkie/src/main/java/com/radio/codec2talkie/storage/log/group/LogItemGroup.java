@@ -1,20 +1,12 @@
-package com.radio.codec2talkie.storage.position;
+package com.radio.codec2talkie.storage.log.group;
 
-import androidx.room.Entity;
-import androidx.room.PrimaryKey;
-
-@Entity
-public class PositionItem {
-
-    @PrimaryKey(autoGenerate = true)
-    private long id;
+public class LogItemGroup {
     private long timestampEpoch;
-    private boolean isTransmit;
-    public String srcCallsign;
+    private String srcCallsign;
     public String dstCallsign;
+    private String maidenHead;
     public double latitude;
     public double longitude;
-    public String maidenHead;
     public double altitudeMeters;
     public double bearingDegrees;
     public double speedMetersPerSecond;
@@ -23,17 +15,9 @@ public class PositionItem {
     public String symbolCode;
     public int privacyLevel;
 
-    public long getId() {
-        return id;
-    }
+    public long getTimestampEpoch() { return timestampEpoch; }
 
-    public long getTimestampEpoch() {
-        return timestampEpoch;
-    }
-
-    public String getSrcCallsign() {
-        return srcCallsign;
-    }
+    public String getSrcCallsign() { return srcCallsign; }
 
     public String getDstCallsign() { return dstCallsign; }
 
@@ -57,27 +41,17 @@ public class PositionItem {
 
     public int getPrivacyLevel() { return privacyLevel; }
 
-    public boolean getIsTransmit() { return isTransmit; }
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    public void setTimestampEpoch(long timestampEpoch) {
-        this.timestampEpoch = timestampEpoch;
-    }
-
-    public void setIsTransmit(boolean isTransmit) { this.isTransmit = isTransmit; }
+    public void setTimestampEpoch(long timestampEpoch) { this.timestampEpoch = timestampEpoch; }
 
     public void setSrcCallsign(String srcCallsign) { this.srcCallsign = srcCallsign; }
+
+    public void setMaidenHead(String maidenHead) { this.maidenHead = maidenHead; }
 
     public void setDstCallsign(String dstCallsign) { this.dstCallsign = dstCallsign; }
 
     public void setLatitude(double latitude) { this.latitude = latitude; }
 
     public void setLongitude(double longitude) { this.longitude = longitude; }
-
-    public void setMaidenHead(String maidenHead) { this.maidenHead = maidenHead; }
 
     public void setAltitudeMeters(double altitudeMeters) { this.altitudeMeters = altitudeMeters; }
 

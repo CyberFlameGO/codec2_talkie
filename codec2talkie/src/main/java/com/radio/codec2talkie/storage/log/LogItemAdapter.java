@@ -8,14 +8,17 @@ import androidx.recyclerview.widget.ListAdapter;
 
 public class LogItemAdapter extends ListAdapter<LogItem, LogItemHolder> {
 
-    public LogItemAdapter(@NonNull DiffUtil.ItemCallback<LogItem> diffCallback) {
+    private final boolean _isClickable;
+
+    public LogItemAdapter(@NonNull DiffUtil.ItemCallback<LogItem> diffCallback, boolean isClickable) {
         super(diffCallback);
+        _isClickable = isClickable;
     }
 
     @NonNull
     @Override
     public LogItemHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        return LogItemHolder.create(parent);
+        return LogItemHolder.create(parent, _isClickable);
     }
 
     @Override
