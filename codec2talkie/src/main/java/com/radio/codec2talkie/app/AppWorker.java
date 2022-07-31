@@ -12,6 +12,7 @@ import android.media.MediaRecorder;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.os.Process;
 import android.util.Log;
 
 import androidx.preference.PreferenceManager;
@@ -29,7 +30,6 @@ import com.radio.codec2talkie.protocol.Protocol;
 import com.radio.codec2talkie.protocol.ProtocolFactory;
 import com.radio.codec2talkie.protocol.position.Position;
 import com.radio.codec2talkie.settings.PreferenceKeys;
-import com.radio.codec2talkie.storage.message.MessageItem;
 import com.radio.codec2talkie.storage.message.MessageItemRepository;
 import com.radio.codec2talkie.storage.position.PositionItemRepository;
 import com.radio.codec2talkie.tools.AudioTools;
@@ -88,15 +88,15 @@ public class AppWorker extends Thread {
         String codec2ModeName = _sharedPreferences.getString(PreferenceKeys.CODEC2_MODE, _context.getResources().getStringArray(R.array.codec2_modes)[0]);
         _codec2Mode = AudioTools.extractCodec2ModeId(codec2ModeName);
 
-        _transport  = TransportFactory.create(transportType);
+        _logItemRepository = new LogItemRepository((Application)context);
+        _messageItemRepository = new MessageItemRepository((Application)context);
+        _positionItemRepository = new PositionItemRepository((Application)context);
+
+        _transport = TransportFactory.create(transportType, context);
         _protocol = ProtocolFactory.create(_codec2Mode, context);
 
         _processPeriodicTimer = new Timer();
         _recordAudioBuffer = new short[_protocol.getPcmAudioBufferSize()];
-
-        _logItemRepository = new LogItemRepository((Application)context);
-        _messageItemRepository = new MessageItemRepository((Application)context);
-        _positionItemRepository = new PositionItemRepository((Application)context);
 
         constructSystemAudioDevices();
     }
@@ -299,6 +299,11 @@ public class AppWorker extends Thread {
         }
 
         @Override
+        protected void onTransmitPosition(Position position) {
+            _positionItemRepository.insertPositionItem(position.toPositionItem(true));
+        }
+
+        @Override
         protected void onTransmitData(String src, String dst, byte[] data) {
             String note = (src == null ? "UNK" : src) + "→" + (dst == null ? "UNK" : dst);
             sendStatusUpdate(AppMessage.EV_TRANSMITTED_VOICE, note);
@@ -486,7 +491,7 @@ public class AppWorker extends Thread {
     @Override
     public void run() {
         Log.i(TAG, "Starting message loop");
-        setPriority(Thread.MAX_PRIORITY);
+        android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
         Looper.prepare();
 
         sendStatusUpdate(AppMessage.EV_CONNECTED, null);

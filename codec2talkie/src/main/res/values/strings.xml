@@ -9,17 +9,17 @@
     <string name="kiss_category_title">KISS Settings</string>
 
     <string name="usb_serial_speed_title">USB Serial Speed</string>
-    <string name="usb_bt_client_name_title">Bluetooth Device</string>
-    <string name="usb_bt_client_name_summary">Default Bluetooth device to connect on startup</string>
+    <string name="usb_bt_client_name_title">Bluetooth device</string>
+    <string name="usb_bt_client_name_summary">Default Bluetooth device to connect</string>
 
-    <string name="codec2_category_title">Codec2 Settings</string>
+    <string name="codec2_category_title">Codec2 settings</string>
     <string name="codec2_mode_title">Mode/Speed</string>
-    <string name="codec2_test_mode_title">Echo test mode</string>
+    <string name="codec2_test_mode_title">Loopback test mode</string>
     <string name="codec2_test_mode_summary">Records and plays recording without transmission</string>
     <string name="codec2_recorder_title">Enable recorder</string>
     <string name="codec2_recorder_summary">Record incoming and outgoing transmissions for future playback</string>
 
-    <string name="main_status_loopback_test">ECHO TEST</string>
+    <string name="main_status_loopback_test">Loopback</string>
     <string name="main_status_stop">STOPPED</string>
     <string name="main_status_tx">TRANSMITTING</string>
     <string name="main_status_rx">RECEIVING</string>
@@ -291,4 +291,13 @@
     <string name="log_item_group_holder_unknown_km">\? km</string>
     <string name="log_view_group_item_icon_description">APRS icon</string>
     <string name="settings_aprs_symbol_image_view_description">APRS symbols</string>
+    <string name="ports_sound_modem_enable_title">Enable sound modem</string>
+    <string name="ports_sound_modem_enable_summary">Send data and receive data through sound modem by using phone speaker and mic</string>
+    <string name="main_status_sound_modem">SoundModem</string>
+    <string name="ports_sound_modem_preamble_title">Frame sync prefix</string>
+    <string name="ports_sound_modem_preamble_summary">No-op preamble (e.g. for VOX control) in milliseconds</string>
+    <string name="ports_sound_modem_type_title">Modem modulation type</string>
+    <string name="ports_sound_modem_control_title">Sound modem settings</string>
+    <string name="ports_sound_modem_control_settings">Set sound modem settings, such as bit rate</string>
+    <string name="ports_type_title">TNC transport type</string>
 </resources>

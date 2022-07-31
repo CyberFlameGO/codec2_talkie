@@ -11,6 +11,7 @@ public class ProtocolFactory {
 
     public enum ProtocolType {
         RAW("RAW"),
+        HDLC("HDLC"),
         KISS("KISS"),
         KISS_BUFFERED("KISS BUF"),
         KISS_PARROT("KISS RPT");
@@ -32,7 +33,9 @@ public class ProtocolFactory {
 
         ProtocolFactory.ProtocolType protocolType;
 
-        if (sharedPreferences.getBoolean(PreferenceKeys.KISS_ENABLED, true)) {
+        if (sharedPreferences.getString(PreferenceKeys.PORTS_TYPE, "loopback").equals("sound_modem")) {
+            protocolType = ProtocolFactory.ProtocolType.HDLC;
+        } else if (sharedPreferences.getBoolean(PreferenceKeys.KISS_ENABLED, true)) {
             if (sharedPreferences.getBoolean(PreferenceKeys.KISS_PARROT, false)) {
                 protocolType = ProtocolFactory.ProtocolType.KISS_PARROT;
             }
@@ -70,28 +73,29 @@ public class ProtocolFactory {
             case KISS_PARROT:
                 proto = new KissParrot();
                 break;
+            case HDLC:
+                proto = new Hdlc(sharedPreferences);
+                break;
             case RAW:
             default:
                 proto = new Raw();
                 break;
         }
 
-        if (protocolType != ProtocolType.RAW) {
-            if (scramblingEnabled) {
-                proto = new Scrambler(proto, scramblingKey);
-            }
-            if (aprsEnabled) {
-                proto = new Ax25(proto);
-            }
-            if (recordingEnabled) {
-                proto = new Recorder(proto, codec2ModeId);
-            }
+        if (scramblingEnabled) {
+            proto = new Scrambler(proto, scramblingKey);
+        }
+        if (aprsEnabled) {
+            proto = new Ax25(proto);
+        }
+        if (recordingEnabled) {
+            proto = new Recorder(proto, codec2ModeId);
         }
 
         proto = new AudioFrameAggregator(proto, codec2ModeId);
         proto = new AudioCodec2(proto, codec2ModeId);
 
-        if (aprsEnabled && protocolType != ProtocolType.RAW) {
+        if (aprsEnabled) { // && protocolType != ProtocolType.RAW) {
             proto = new Aprs(proto);
         }
         return proto;

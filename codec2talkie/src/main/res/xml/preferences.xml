@@ -84,13 +84,6 @@
         </EditTextPreference>
 
         <SwitchPreference
-            app:key="codec2_test_mode"
-            app:title="@string/codec2_test_mode_title"
-            app:summary="@string/codec2_test_mode_summary"
-            app:defaultValue="false">
-        </SwitchPreference>
-
-        <SwitchPreference
             app:key="codec2_recording_enabled"
             app:title="@string/codec2_recorder_title"
             app:summary="@string/codec2_recorder_summary"
@@ -102,6 +95,15 @@
         app:key="ports_category"
         app:title="@string/ports_category_title">
 
+        <ListPreference
+            app:key="ports_type"
+            app:title="@string/ports_type_title"
+            app:entries="@array/ports_type_labels"
+            app:entryValues="@array/ports_type_values"
+            app:summary="%s"
+            app:defaultValue="loopback">
+        </ListPreference>
+
         <Preference
             app:key="ports_bt_client_name"
             app:title="@string/usb_bt_client_name_title"
@@ -112,13 +114,6 @@
             </intent>
         </Preference>
 
-        <SwitchPreference
-            app:key="ports_bt_ble_enable"
-            app:title="@string/ports_bt_ble_enable_title"
-            app:summary="@string/ports_bt_ble_enable_summary"
-            app:defaultValue="false">
-        </SwitchPreference>
-
         <Preference
             app:key="ports_usb_serial"
             app:title="@string/usb_serial_title"
@@ -126,19 +121,18 @@
             app:fragment="com.radio.codec2talkie.settings.SettingsActivity$SettingsUsbFragment">
         </Preference>
 
-        <SwitchPreference
-            app:key="ports_tcp_ip_enable"
-            app:title="@string/ports_tcp_ip_enable_title"
-            app:summary="@string/ports_tcp_ip_enable_summary"
-            app:defaultValue="false">
-        </SwitchPreference>
-
         <Preference
             android:key="pref_tcp_ip_control"
             android:title="@string/port_tcp_ip_prefs_title"
             android:summary="@string/port_tcp_ip_prefs_summary"
-            app:fragment="com.radio.codec2talkie.settings.SettingsActivity$SettingsTcpIpFragment"
-            app:dependency="ports_tcp_ip_enable">
+            app:fragment="com.radio.codec2talkie.settings.SettingsActivity$SettingsTcpIpFragment">
+        </Preference>
+
+        <Preference
+            app:key="ports_sound_modem_control"
+            app:title="@string/ports_sound_modem_control_title"
+            app:summary="@string/ports_sound_modem_control_settings"
+            app:fragment="com.radio.codec2talkie.settings.SettingsActivity$SettingsSoundModemFragment">
         </Preference>
 
     </PreferenceCategory>
