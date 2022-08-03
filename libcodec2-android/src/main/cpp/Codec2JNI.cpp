@@ -60,7 +60,7 @@ namespace Java_com_ustadmobile_codec2_Codec2 {
         struct ContextFsk *conFsk;
         conFsk = (struct ContextFsk *) malloc(sizeof(struct ContextFsk));
         struct FSK *fsk;
-        fsk = fsk_create_hbr(sampleFrequency, symbolRate, MODE_2FSK, sampleFrequency/symbolRate, FSK_DEFAULT_NSYM, toneFreq, toneSpacing);
+        fsk = fsk_create_hbr(sampleFrequency, symbolRate, MODE_2FSK, 10, FSK_DEFAULT_NSYM, toneFreq, toneSpacing);
         conFsk->fsk = fsk;
 
         conFsk->Nbits = fsk->Nbits;
@@ -68,11 +68,14 @@ namespace Java_com_ustadmobile_codec2_Codec2 {
         conFsk->Ts = fsk->Ts;
 
         conFsk->modBuf = (float*)malloc(sizeof(float) * conFsk->N);
-        conFsk->modBits = (uint8_t*)malloc(conFsk->Nbits);
+        conFsk->modBits = (uint8_t*)malloc(sizeof(uint8_t) * conFsk->Nbits);
 
         conFsk->demodCBuf = (COMP*)malloc(sizeof(COMP) * (fsk->N + 2 * fsk->Ts));
         conFsk->demodBits = (uint8_t*)malloc(sizeof(uint8_t) * fsk->Nbits);
         conFsk->demodBuf = (int16_t*)malloc(sizeof(short) * (fsk->N + 2 * fsk->Ts));
+
+        fsk_set_freq_est_limits(fsk, 500, sampleFrequency / 2);
+        fsk_set_freq_est_alg(fsk, 0);
 
         auto pv = (unsigned long) conFsk;
         return pv;
@@ -90,12 +93,12 @@ namespace Java_com_ustadmobile_codec2_Codec2 {
 
     static jint fskDemodSamplesBufSize(JNIEnv * env, jclass clazz, jlong n) {
         ContextFsk *conFsk = getContextFsk(n);
-        return sizeof(short) * (conFsk->N + 2 * conFsk->Ts);
+        return conFsk->N + 2 * conFsk->Ts;  // number of shorts
     }
 
     static jint fskDemodBitsBufSize(JNIEnv * env, jclass clazz, jlong n) {
         ContextFsk *conFsk = getContextFsk(n);
-        return sizeof(uint8_t) * conFsk->Nbits;
+        return conFsk->Nbits;
     }
 
     static jint fskModSamplesBufSize(JNIEnv * env, jclass clazz, jlong n) {
@@ -111,6 +114,11 @@ namespace Java_com_ustadmobile_codec2_Codec2 {
     static jint fskSamplesPerSymbol(JNIEnv * env, jclass clazz, jlong n) {
         ContextFsk *conFsk = getContextFsk(n);
         return conFsk->Ts;
+    }
+
+    static jint fskNin(JNIEnv * env, jclass clazz, jlong n) {
+        ContextFsk *conFsk = getContextFsk(n);
+        return fsk_nin(conFsk->fsk);
     }
 
     static jint destroy(JNIEnv *env, jclass clazz, jlong n) {
@@ -155,14 +163,8 @@ namespace Java_com_ustadmobile_codec2_Codec2 {
 
     static jlong fskModulate(JNIEnv *env, jclass clazz, jlong n, jshortArray outputSamples, jbyteArray inputBits) {
         ContextFsk *conFsk = getContextFsk(n);
-        jbyte *jbuf = env->GetByteArrayElements(inputBits, nullptr);
-        //for (int i = 0; i < conFsk->Nbits; i++) {
         int inputBitsSize = env->GetArrayLength(inputBits);
-        for (int i = 0; i < inputBitsSize; i++) {
-            auto v = (unsigned char) jbuf[i];
-            conFsk->modBits[i] = v;
-        }
-        env->ReleaseByteArrayElements(inputBits, jbuf, 0);
+        env->GetByteArrayRegion(inputBits, 0, inputBitsSize, reinterpret_cast<jbyte*>(conFsk->modBits));
         fsk_mod(conFsk->fsk, conFsk->modBuf, conFsk->modBits, inputBitsSize);
         jshort *jOutBuf = env->GetShortArrayElements(outputSamples, nullptr);
         for (int i = 0; i < conFsk->N; i++) {
@@ -207,7 +209,8 @@ namespace Java_com_ustadmobile_codec2_Codec2 {
         {"fskModSamplesBufSize","(J)I",    (void *) fskModSamplesBufSize},
         {"fskDemodSamplesBufSize","(J)I",  (void *) fskDemodSamplesBufSize},
         {"fskModBitsBufSize",  "(J)I",     (void *) fskModBitsBufSize},
-        {"fskSamplesPerSymbol","(J)I",     (void *) fskSamplesPerSymbol}
+        {"fskSamplesPerSymbol","(J)I",     (void *) fskSamplesPerSymbol},
+        {"fskNin",             "(J)I",     (void *) fskNin}
     };
 }
 
