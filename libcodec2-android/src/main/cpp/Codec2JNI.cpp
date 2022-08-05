@@ -60,7 +60,7 @@ namespace Java_com_ustadmobile_codec2_Codec2 {
         struct ContextFsk *conFsk;
         conFsk = (struct ContextFsk *) malloc(sizeof(struct ContextFsk));
         struct FSK *fsk;
-        fsk = fsk_create_hbr(sampleFrequency, symbolRate, MODE_2FSK, 10, FSK_DEFAULT_NSYM, toneFreq, toneSpacing);
+        fsk = fsk_create_hbr(sampleFrequency, symbolRate, MODE_2FSK, 8, FSK_DEFAULT_NSYM, toneFreq, toneSpacing);
         conFsk->fsk = fsk;
 
         conFsk->Nbits = fsk->Nbits;
@@ -74,7 +74,7 @@ namespace Java_com_ustadmobile_codec2_Codec2 {
         conFsk->demodBits = (uint8_t*)malloc(sizeof(uint8_t) * fsk->Nbits);
         conFsk->demodBuf = (int16_t*)malloc(sizeof(short) * (fsk->N + 2 * fsk->Ts));
 
-        fsk_set_freq_est_limits(fsk, 500, sampleFrequency / 2);
+        fsk_set_freq_est_limits(fsk, 500, sampleFrequency / 4);
         fsk_set_freq_est_alg(fsk, 0);
 
         auto pv = (unsigned long) conFsk;
