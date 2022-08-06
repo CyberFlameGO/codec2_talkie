@@ -25,6 +25,7 @@ namespace Java_com_ustadmobile_codec2_Codec2 {
         int Nbits;
         int N;
         int Ts;
+        int gain;
     };
 
     static Context *getContext(jlong jp) {
@@ -56,7 +57,7 @@ namespace Java_com_ustadmobile_codec2_Codec2 {
         return pv;
     }
 
-    static jlong fskCreate(JNIEnv *env, jclass clazz, int sampleFrequency, int symbolRate, int toneFreq, int toneSpacing) {
+    static jlong fskCreate(JNIEnv *env, jclass clazz, int sampleFrequency, int symbolRate, int toneFreq, int toneSpacing, int gain) {
         struct ContextFsk *conFsk;
         conFsk = (struct ContextFsk *) malloc(sizeof(struct ContextFsk));
         struct FSK *fsk;
@@ -73,6 +74,8 @@ namespace Java_com_ustadmobile_codec2_Codec2 {
         conFsk->demodCBuf = (COMP*)malloc(sizeof(COMP) * (fsk->N + 2 * fsk->Ts));
         conFsk->demodBits = (uint8_t*)malloc(sizeof(uint8_t) * fsk->Nbits);
         conFsk->demodBuf = (int16_t*)malloc(sizeof(short) * (fsk->N + 2 * fsk->Ts));
+
+        conFsk->gain = gain;
 
         fsk_set_freq_est_limits(fsk, 500, sampleFrequency / 4);
         fsk_set_freq_est_alg(fsk, 0);
@@ -168,7 +171,7 @@ namespace Java_com_ustadmobile_codec2_Codec2 {
         fsk_mod(conFsk->fsk, conFsk->modBuf, conFsk->modBits, inputBitsSize);
         jshort *jOutBuf = env->GetShortArrayElements(outputSamples, nullptr);
         for (int i = 0; i < conFsk->N; i++) {
-            jOutBuf[i] = (int16_t)(conFsk->modBuf[i] * FDMDV_SCALE);
+            jOutBuf[i] = (int16_t)(conFsk->modBuf[i] * conFsk->gain);
         }
         env->ReleaseShortArrayElements(outputSamples, jOutBuf, 0);
         return 0;
@@ -186,7 +189,7 @@ namespace Java_com_ustadmobile_codec2_Codec2 {
         ContextFsk *conFsk = getContextFsk(n);
         env->GetShortArrayRegion(inputSamples, 0, conFsk->N, reinterpret_cast<jshort*>(conFsk->demodBuf));
         for(int i = 0; i < fsk_nin(conFsk->fsk); i++){
-            conFsk->demodCBuf[i].real = ((float)conFsk->demodBuf[i]) / FDMDV_SCALE;
+            conFsk->demodCBuf[i].real = ((float)conFsk->demodBuf[i]) / conFsk->gain;
             conFsk->demodCBuf[i].imag = 0.0;
         }
         fsk_demod(conFsk->fsk, conFsk->demodBits, conFsk->demodCBuf);
@@ -201,7 +204,7 @@ namespace Java_com_ustadmobile_codec2_Codec2 {
         {"destroy",            "(J)I",     (void *) destroy},
         {"encode",             "(J[S[C)J", (void *) encode},
         {"decode",             "(J[S[B)J", (void *) decode},
-        {"fskCreate",          "(IIII)J",  (void *) fskCreate},
+        {"fskCreate",          "(IIIII)J", (void *) fskCreate},
         {"fskDestroy",         "(J)I",     (void *) fskDestroy},
         {"fskModulate",        "(J[S[B)J", (void *) fskModulate},
         {"fskDemodulate",      "(J[S[B)J", (void *) fskDemodulate},

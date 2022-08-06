@@ -12,6 +12,8 @@ import android.util.Log;
 
 import androidx.preference.PreferenceManager;
 
+import com.radio.codec2talkie.rigctl.RigCtl;
+import com.radio.codec2talkie.rigctl.RigCtlFactory;
 import com.radio.codec2talkie.settings.PreferenceKeys;
 import com.radio.codec2talkie.tools.AudioTools;
 import com.radio.codec2talkie.tools.BitTools;
@@ -22,13 +24,18 @@ import java.io.IOException;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class SoundModem implements Transport, Runnable {
 
     private static final String TAG = SoundModem.class.getSimpleName();
 
+    private static final int PTT_OFF_DELAY_MS = 1000;
+
     // NOTE, codec2 library requires that sample_rate % bit_rate == 0
     public static final int SAMPLE_RATE = 19200;
+    //public static final int SAMPLE_RATE = 48000;
 
     private final String _name;
 
@@ -52,20 +59,25 @@ public class SoundModem implements Transport, Runnable {
 
     private final long _fskModem;
 
+    private final RigCtl _rigCtl;
+    private Timer _pttOffTimer;
+    private boolean _isPttOn = false;
+
     public SoundModem(Context context) {
         _context = context;
         _sharedPreferences = PreferenceManager.getDefaultSharedPreferences(_context);
 
         boolean disableRx = _sharedPreferences.getBoolean(PreferenceKeys.PORTS_SOUND_MODEM_DISABLE_RX, false);
         int bitRate = Integer.parseInt(_sharedPreferences.getString(PreferenceKeys.PORTS_SOUND_MODEM_TYPE, "1200"));
+        int gain = Integer.parseInt(_sharedPreferences.getString(PreferenceKeys.PORTS_SOUND_MODEM_GAIN, "10000"));
         _name = "SoundModem" + bitRate;
         if (bitRate == 300) {
             // <230 spacing for 300 bps does not work with codec2 fsk for receive
-            _fskModem = Codec2.fskCreate(SAMPLE_RATE, 300, 1600, 200);
+            _fskModem = Codec2.fskCreate(SAMPLE_RATE, 300, 1600, 200, gain);
         } else if (bitRate == 1200) {
-            _fskModem = Codec2.fskCreate(SAMPLE_RATE, 1200, 1200, 1000);
+            _fskModem = Codec2.fskCreate(SAMPLE_RATE, 1200, 1200, 1000, gain);
         } else {
-            _fskModem = Codec2.fskCreate(SAMPLE_RATE, 2400, 2165, 1805);
+            _fskModem = Codec2.fskCreate(SAMPLE_RATE, 2400, 2165, 1805, gain);
         }
 
         _recordAudioBuffer = new short[Codec2.fskDemodSamplesBufSize(_fskModem)];
@@ -81,6 +93,15 @@ public class SoundModem implements Transport, Runnable {
             _sampleBuffer = ByteBuffer.allocate(100000);
         else
             _sampleBuffer = ByteBuffer.allocate(0);
+
+        _rigCtl = RigCtlFactory.create(context);
+        try {
+            _rigCtl.initialize(TransportFactory.create(TransportFactory.TransportType.USB, context), context, null);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        _isPttOn = false;
 
         if (!disableRx)
             new Thread(this).start();
@@ -147,6 +168,8 @@ public class SoundModem implements Transport, Runnable {
 
     @Override
     public int write(byte[] srcDataBytesAsBits) throws IOException {
+        pttOn();
+
         //Log.v(TAG, "write     " + DebugTools.byteBitsToFlatString(srcDataBytesAsBits));
         byte[] dataBytesAsBits = BitTools.convertToNRZI(srcDataBytesAsBits);
         //Log.v(TAG, "write NRZ " + DebugTools.byteBitsToFlatString(dataBytesAsBits));
@@ -184,6 +207,7 @@ public class SoundModem implements Transport, Runnable {
         } else {
             _systemAudioPlayer.write(_playbackAudioBuffer, 0, bitBufferTail.length * _samplesPerSymbol);
         }
+        pttOff();
         return 0;
     }
 
@@ -226,8 +250,10 @@ public class SoundModem implements Transport, Runnable {
                 }
             } else {
                 int readCnt = _systemAudioRecorder.read(_recordAudioBuffer, 0, nin);
+                // TODO, read tail
                 if (readCnt != nin) {
-                    Log.e(TAG, "" + readCnt + " != " + nin);
+                    Log.w(TAG, "" + readCnt + " != " + nin);
+                    continue;
                 }
                 //Log.v(TAG, "read samples: " + DebugTools.shortsToHex(_recordAudioBuffer));
             }
@@ -247,5 +273,37 @@ public class SoundModem implements Transport, Runnable {
                 }
             }
         }
+    }
+
+    private void pttOn() {
+        if (_isPttOn) return;
+
+        try {
+            _rigCtl.pttOn();
+            _isPttOn = true;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void pttOff() {
+        if (!_isPttOn) return;
+        if (_pttOffTimer != null) {
+            _pttOffTimer.cancel();
+            _pttOffTimer.purge();
+            _pttOffTimer = null;
+        }
+        _pttOffTimer = new Timer();
+        _pttOffTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    _rigCtl.pttOff();
+                    _isPttOn = false;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, PTT_OFF_DELAY_MS);
     }
 }

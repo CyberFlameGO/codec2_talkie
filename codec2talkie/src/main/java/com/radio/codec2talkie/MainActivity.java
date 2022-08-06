@@ -110,6 +110,7 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     private boolean _isConnecting = false;
     private boolean _isAppExit = false;
     private boolean _isAppRestart = false;
+    private boolean _isRigCtlUsbConnected = false;
 
     private long _backPressedTimestamp;
 
@@ -262,7 +263,11 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
                     break;
                 case "sound_modem":
                     _textConnInfo.setText(R.string.main_status_sound_modem);
-                    startAppService(TransportFactory.TransportType.SOUND_MODEM);
+                    String rig = _sharedPreferences.getString(PreferenceKeys.PORTS_SOUND_MODEM_RIG, "Disabled");
+                    if (rig.equals("Disabled"))
+                        startAppService(TransportFactory.TransportType.SOUND_MODEM);
+                    else
+                        startUsbConnectActivity();
                     break;
                 case "tcp_ip":
                     startTcpIpConnectActivity();
@@ -284,7 +289,11 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
             Intent data = result.getData();
             assert data != null;
             int resultCode = result.getResultCode();
-            if (resultCode == RESULT_CANCELED) {
+            String transportType = _sharedPreferences.getString(PreferenceKeys.PORTS_TYPE, "loopback");
+            if (transportType.equals("sound_modem")) {
+                _isRigCtlUsbConnected = resultCode == RESULT_OK;
+                startAppService(TransportFactory.TransportType.SOUND_MODEM);
+            } else if (resultCode == RESULT_CANCELED) {
                 _textConnInfo.setText(R.string.main_status_loopback_test);
                 startAppService(TransportFactory.TransportType.LOOPBACK);
             } else if (resultCode == RESULT_OK) {
@@ -296,6 +305,7 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
 
     protected void startUsbConnectActivity() {
         _isConnecting = true;
+        _isRigCtlUsbConnected = false;
         _usbActivityLauncher.launch(new Intent(this, UsbConnectActivity.class));
     }
 
@@ -454,6 +464,12 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         boolean scramblingEnabled = _sharedPreferences.getBoolean(PreferenceKeys.KISS_SCRAMBLING_ENABLED, false);
         if (scramblingEnabled) {
             status += getString(R.string.kiss_scrambler_label);
+        }
+
+        // rig CAT control
+        String rigName = _sharedPreferences.getString(PreferenceKeys.PORTS_SOUND_MODEM_RIG, "Disabled");
+        if (!rigName.equals("Disabled") && _isRigCtlUsbConnected) {
+            status += getString(R.string.ports_sound_modem_rig_label);
         }
 
         // aprs
