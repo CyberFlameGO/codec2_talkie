@@ -8,6 +8,7 @@ import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
 import android.os.Process;
+import android.provider.MediaStore;
 import android.util.Log;
 
 import androidx.preference.PreferenceManager;
@@ -59,8 +60,8 @@ public class SoundModem implements Transport, Runnable {
 
     private final RigCtl _rigCtl;
     private Timer _pttOffTimer;
-    private boolean _isPttOn = false;
-    private int _pttOffDelayMs = 1000;
+    private boolean _isPttOn;
+    private int _pttOffDelayMs;
 
     public SoundModem(Context context) {
         _context = context;
@@ -140,10 +141,9 @@ public class SoundModem implements Transport, Runnable {
                         .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
                         .build())
                 .setTransferMode(AudioTrack.MODE_STREAM)
-                .setBufferSizeInBytes(audioPlayerMinBufferSize)
+                .setBufferSizeInBytes(10*audioPlayerMinBufferSize)
                 .build();
         _systemAudioPlayer.setVolume(AudioTrack.getMaxVolume());
-        _systemAudioPlayer.play();
     }
 
     @Override
@@ -175,6 +175,9 @@ public class SoundModem implements Transport, Runnable {
         //Log.v(TAG, "write NRZ " + DebugTools.byteBitsToFlatString(dataBytesAsBits));
         //Log.v(TAG, "write NRZ " + DebugTools.byteBitsToString(dataBytesAsBits));
 
+        if (_systemAudioPlayer.getPlayState() != AudioTrack.PLAYSTATE_PLAYING)
+            _systemAudioPlayer.play();
+
         int j = 0;
         for (int i = 0; i < dataBytesAsBits.length; i++, j++) {
             if (j >= _playbackBitBuffer.length) {
@@ -205,8 +208,9 @@ public class SoundModem implements Transport, Runnable {
                 }
             }
         } else {
-            _systemAudioPlayer.write(_playbackAudioBuffer, 0, bitBufferTail.length * _samplesPerSymbol);
+            _systemAudioPlayer.write(_playbackAudioBuffer, 0, _playbackAudioBuffer.length);
         }
+        _systemAudioPlayer.stop();
         pttOff();
         return 0;
     }
