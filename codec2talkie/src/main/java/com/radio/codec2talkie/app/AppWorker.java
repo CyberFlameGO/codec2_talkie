@@ -4,11 +4,13 @@ import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.media.AudioAttributes;
+import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -98,10 +100,10 @@ public class AppWorker extends Thread {
         _processPeriodicTimer = new Timer();
         _recordAudioBuffer = new short[_protocol.getPcmAudioBufferSize()];
 
-        constructSystemAudioDevices();
+        constructSystemAudioDevices(transportType);
     }
 
-    private void constructSystemAudioDevices() {
+    private void constructSystemAudioDevices(TransportFactory.TransportType transportType) {
         int _audioRecorderMinBufferSize = AudioRecord.getMinBufferSize(
                 AUDIO_SAMPLE_SIZE,
                 AudioFormat.CHANNEL_IN_MONO,
@@ -128,12 +130,51 @@ public class AppWorker extends Thread {
         if (isSpeakerOutput) {
             usage = AudioManager.STREAM_MUSIC;
         }
-        _systemAudioPlayer = new AudioTrack(usage,
-                AUDIO_SAMPLE_SIZE,
-                AudioFormat.CHANNEL_OUT_MONO,
-                AudioFormat.ENCODING_PCM_16BIT,
-                10 * _audioPlayerMinBufferSize,
-                AudioTrack.MODE_STREAM);
+
+        _systemAudioPlayer = new AudioTrack.Builder()
+                .setAudioAttributes(new AudioAttributes.Builder()
+                        .setUsage(usage)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build())
+                .setAudioFormat(new AudioFormat.Builder()
+                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                        .setSampleRate(AUDIO_SAMPLE_SIZE)
+                        .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                        .build())
+                .setTransferMode(AudioTrack.MODE_STREAM)
+                .setBufferSizeInBytes(10 * _audioPlayerMinBufferSize)
+                .build();
+
+        // Use built in mic and speaker for speech when sound modem is in use
+        if (transportType == TransportFactory.TransportType.SOUND_MODEM) {
+            selectBuiltinMicAndSpeakerEarpiece(isSpeakerOutput);
+        }
+    }
+
+    private void selectBuiltinMicAndSpeakerEarpiece(boolean isSpeakerOutput) {
+        AudioManager audioManager = (AudioManager)_context.getSystemService(Context.AUDIO_SERVICE);
+
+        for (AudioDeviceInfo inputDevice : audioManager.getDevices(AudioManager.GET_DEVICES_INPUTS)) {
+            boolean isBuiltIn = inputDevice.getType() == AudioDeviceInfo.TYPE_BUILTIN_MIC;
+            Log.i(TAG, "input device: " + isBuiltIn + " " + inputDevice.getProductName() + " " + inputDevice.getType());
+            if (isBuiltIn) {
+                boolean isSet = _systemAudioRecorder.setPreferredDevice(inputDevice);
+                if (!isSet)
+                    Log.w(TAG, "cannot select input " + inputDevice.getProductName());
+                break;
+            }
+        }
+
+        for (AudioDeviceInfo outputDevice : audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)) {
+            boolean isBuiltIn = outputDevice.getType() == (isSpeakerOutput ? AudioDeviceInfo.TYPE_BUILTIN_SPEAKER : AudioDeviceInfo.TYPE_BUILTIN_EARPIECE);
+            Log.i(TAG, "output device: " + isBuiltIn + " " + outputDevice.getProductName() + " " + outputDevice.getType());
+            if (isBuiltIn) {
+                boolean isSet = _systemAudioPlayer.setPreferredDevice(outputDevice);
+                if (!isSet)
+                    Log.w(TAG, "cannot select output " + outputDevice.getProductName());
+                break;
+            }
+        }
     }
 
     public static int getAudioMinLevel() {
@@ -244,7 +285,10 @@ public class AppWorker extends Thread {
             String note = (src == null ? "UNK" : src) + "→" + (dst == null ? "UNK" : dst);
             sendStatusUpdate(AppMessage.EV_VOICE_RECEIVED, note);
             sendRxAudioLevelUpdate(pcmFrame);
+            if (_systemAudioPlayer.getPlayState() != AudioTrack.PLAYSTATE_PLAYING)
+                _systemAudioPlayer.play();
             _systemAudioPlayer.write(pcmFrame, 0, pcmFrame.length);
+            _systemAudioPlayer.stop();
         }
 
         @Override
@@ -388,7 +432,6 @@ public class AppWorker extends Thread {
         if (!_needTransmission && _systemAudioRecorder.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
             _protocol.flush();
             _systemAudioRecorder.stop();
-            _systemAudioPlayer.play();
             sendTxAudioLevelUpdate(null);
         }
     }
